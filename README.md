@@ -1,15 +1,12 @@
 # DCompiler: Compilador del lenguaje D en C
-
-Proyecto desarrollado para la asignatura de Procesadores de Lenguaje del grado de Ingeniería Informática en la Universidad de Santiago de Compostela (USC). El proyecto está desarrollado por Iago Feijóo Rey.
+Proyecto desarrollado para la asignatura deCompiladores e intérpretes del grado de Ingeniería Informática en la Universidad de Santiago de Compostela (USC). El proyecto está desarrollado por Iago Feijóo Rey.
 
 ## Descripción del Proyecto
-
 Implementación de un compilador para el lenguaje de programación **D**, escrito en C. El compilador está actualmente en fase de **análisis léxico**, siendo capaz de tokenizar código fuente D e identificar todos sus componentes léxicos: palabras reservadas, identificadores, literales (enteros, reales y strings), operadores y símbolos.
 
 El sistema implementa un **doble buffer centinela** para la lectura eficiente del fichero fuente, autómatas específicos para cada tipo de componente léxico, y una tabla de símbolos con hash para la gestión de identificadores y palabras reservadas. Soporta los tres tipos de comentarios del lenguaje D: de línea (`//`), de bloque (`/* */`) y **anidados** (`/+ +/`).
 
 ## Contenido del Repositorio
-
 * `src/`:
     - `main.c`: Punto de entrada. Carga el fichero, inicializa los módulos y ejecuta el análisis.
     - `sistemaDeEntrada.c/.h`: Sistema de doble buffer centinela para la lectura del fichero fuente.
