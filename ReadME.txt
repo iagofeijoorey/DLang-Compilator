@@ -1,7 +1,11 @@
 //Guía de uso
 
-- Para compilar el programa usar el siguiente comando:
-gcc -o compilador main.c sistemaDeEntrada.c analizadorlexico.c analizadorsintactico.c TS.c ABB.c errores.c
+Se puede usar el makefile incluido, usando el comando
+make
+
+o bien se puede compilar el programa usar los siguientes comandos en orden:
+flex -o lex_yy.c compilador.l
+gcc -o compilador main.c analizadorsintactico.c lex_yy.c TS.c ABB.c errores.c
 
 Esto generará el ejecutable: compilador
 
@@ -14,12 +18,14 @@ Esto ejecutara el analizador para el archivo que se le indique. En caso de que n
 
 
 
-//Explicación del programa
-
-Este proyecto está compuesto por un main que comprueba los argumentos pasados por terminal (si es que se le han pasado, sino se trata el caso por defecto) y luego ejecuta el análisis del compilador. Esto se hace llamando a la función AD_imprimir_lexemas() del analizador sintáctico (analizadorsintactico.c/.h) 
-
-El analizador sintáctico realmente solo se encarga de pedir componentes léxicos e imprimirlo por pantalla, no de hacer un análisis sintáctico real. Esto se hace invocando la función AL_sig_comp_lexico() del analizador léxico (analizadorlexico.c/.h). 
-
-Esta clase se encarga de ejecutar un autómata que pide caracteres al Sistema de Entrada y dependiendo de que tipo de carácter sea llama a un autómata específico para el tipo de lexema que vamos a leer. Cada autómata sigue leyendo caracteres mientras no termina el autómata. Esto llama a la función SE_sig_caracter() del Sistema de entrada (SE) que es lo que le permite ir recibiendo los caracteres del fichero que se está analizando.
-
-El sistema de entrada tiene precisamente esa función, leer el fichero. Cuenta con un sistema de doble centinela capaz de ir metiendo en el buffer (en mi caso es un único buffer, que trato como si estuviera dividido en dos) el contenido del fichero. Luego la función devuelve el carácter leído del buffer.
+// Explicación del programa
+ 
+El main abre el fichero indicado por parámetro (o regression.d por defecto) y lo asigna a yyin, la variable global de Flex que apunta al flujo de entrada. Después inicializa la tabla de símbolos, que ya viene cargada con las palabras reservadas del lenguaje.
+ 
+A continuación se llama a AS_imprimir_lexemas() del analizador sintáctico. Esta función pide tokens uno a uno llamando a yylex() (generado por Flex a partir de compilador.l) e imprime cada uno con el formato <tipo, "lexema"> hasta que se agota la entrada.
+ 
+Flex se encarga de leer el fichero directamente desde yyin: gestiona su propio buffer interno, por lo que no hace falta ningún sistema de entrada separado. Cada vez que reconoce un token actualiza la variable global _ultimo_token y devuelve el código numérico del tipo.
+ 
+Cuando se lee un identificador, el analizador léxico consulta la tabla de símbolos para saber si es una palabra reservada ya conocida o un identificador nuevo. En el segundo caso lo inserta con código ID.
+ 
+Al terminar el análisis, el main imprime el estado final de la TS (palabras reservadas + todos los identificadores encontrados) y libera la memoria antes de cerrar el fichero.

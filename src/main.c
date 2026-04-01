@@ -3,7 +3,6 @@
 #include "string.h"
 #include "stdbool.h"
 #include "definiciones.h"
-#include "sistemaDeEntrada.h"
 #include "analizadorsintactico.h"
 #include "TS.h"
 
@@ -28,6 +27,8 @@
  *
  */
 
+ extern FILE *yyin;   /* variable global de Flex */
+
 
 int main(int argc, char *argv[])
 {
@@ -40,7 +41,11 @@ int main(int argc, char *argv[])
     }
 
     /* - Inciar TS y Sistema de Entrada (SE) - */
-    SE_inicializar(fichero);
+    yyin = fopen(fichero, "r");
+    if (!yyin) {
+        fprintf(stderr, "No se pudo abrir el fichero: %s\n", fichero);
+        exit(EXIT_FAILURE);
+    }
     TS_init();
 
     printf("\n\n===================================================");
@@ -48,7 +53,6 @@ int main(int argc, char *argv[])
     TS_imprimir();
 
     /* ── ANALISIS ── */
-    AS_inicializar();
     printf("\n\n===================================================");
     printf("  \n================= INICIO ANALISIS =================\n\n");
 
@@ -64,7 +68,7 @@ int main(int argc, char *argv[])
 
     /* - Limpieza - */
     TS_destruir();
-    SE_cerrar_fichero();
+    fclose(yyin);
 
     return 0;
 }

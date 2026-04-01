@@ -1,0 +1,44 @@
+/*
+ *
+ * compilador.l es el analizador léxico, definido con Flex y compilado a lex_yy.c. Es el núcleo del reconocimiento de tokens: a partir del fichero abierto en yyin,
+ * cada llamada a yylex() lee caracteres y aplica las reglas definidas a continuación para identificar el siguiente componente léxico.
+ *
+ * Al reconocer un token, se rellena la variable global _ultimo_token (tipo + lexema) mediante la función auxiliar hacer_token() y se devuelve el código numérico del tipo,
+ * que es lo que recibe el analizador sintáctico.
+ *
+ * Tipos de tokens reconocidos:
+ *      - Espacios y saltos de línea          -> se ignoran
+ *      - Comentarios de línea  (//)          -> se ignoran
+ *      - Comentarios de bloque (/* ... *\/)  -> se ignoran
+ *      - Comentarios anidados  (/+ ... +/)   -> se ignoran (con contador de profundidad)
+ *      - Identificadores / palabras reservadas -> se consulta la TS; si ya existe se devuelve su código, si no se inserta como ID
+ *      - Literales enteros (decimal, hex, binario) -> LIT_ENTERO
+ *      - Literales reales (con punto y/o exponente) -> LIT_REAL
+ *      - Literales string                    -> LIT_STRING (avisa si el string no se cierra)
+ *      - Operadores compuestos (++, +=, ==, <=) -> sus códigos respectivos
+ *      - Operadores y puntuación de 1 carácter -> su propio código ASCII
+ *      - Cualquier otro carácter             ->error fatal
+ *
+ * Flex gestiona internamente el buffer de lectura del fichero, por lo que no hace falta n sistema de entrada separado.
+ *
+ * Y eso es todo por el analizador léxico. Continuación en la tabla de símbolos (TS.c).
+ *
+ */
+
+
+/* 
+ * Comentarios anidados /+ ... +/: se usa un contador de profundidad para soportar varios niveles de anidamiento. Se incrementa al abrir (/+)
+ * y se decrementa al cerrar (+/); cuando llega a 0 el comentario termina. 
+ */
+
+
+/* 
+ * Identificadores y palabras reservadas: se consulta la TS para saber si el lexema ya está registrado (palabra reservada o ID visto antes). Si no existe
+ * se inserta como ID nuevo. 
+ */
+
+
+/* 
+ * Strings: la primera regla acepta strings correctamente cerrados con secuencias de escape; la segunda detecta strings que llegan al final de línea sin cerrarse
+ * y notifica el error sin abortar la ejecución. 
+ */
