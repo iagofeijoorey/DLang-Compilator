@@ -3,55 +3,31 @@
 #include "string.h"
 #include "stdbool.h"
 #include "TS.h"
+#include "ABB.h"
 
-/* - Nodo de la tabla (lista enlazada por hash) - */
-typedef struct Nodo {
-    char       lexema[TAM_LEXEMA];
-    TipoComponeneteLexico  tipo;
-    struct Nodo *sig;
-} Nodo;
+static ABB tabla;
+static bool iniciada = false;
 
-/* - Hash table simple - */
-#define NUM_ENTRADAS_HASH 128
+/*
+ * Antes, en mi versión previa, usé una tabla hash para la TS, pero decidí cambiar a un ABB que tenía en la entrega pero que no usaba
+ * Para la anterior entrega había implementado una tabla hash y también habia cogido de una asignatura anterior un ABB, pero usaba la primera
+ * Sin embargo, para esta versión he quitado la tabla hash y usado solo la ABB porque no tenía ningun sentido tener ambas cosas ahi sin usar una de ellas
+ *
+ * TS.c implementa la Tabla de Símbolos del compilador. Internamente usa un ABB donde cada nodo almacena un par (lexema -> código de tipo). 
+ *
+ * Al inicializarse con TS_init() se precargan todas las palabras reservadas del lenguaje. A partir de ahí, cada vez que el analizador léxico lee un identificador
+ * llama a TS_buscar() para saber si es una palabra reservada o un ID ya visto, y llama a TS_insertar() si es un ID nuevo.
+ *
+ * TS_imprimir() recorre el árbol en inorden (orden alfabético) e imprime cada entrada, lo que permite ver el estado de la tabla antes y después del análisis.
+ *
+ * TS_destruir() libera toda la memoria dinámica asociada
+ *
+ */
 
-static Nodo *tabla[NUM_ENTRADAS_HASH];
-static bool  iniciada = false;
-
-static unsigned int hash(const char *s)
-{
-    unsigned int h = 0;
-    while (*s) h = h * 31 + (unsigned char)*s++;
-    return h % NUM_ENTRADAS_HASH;
-}
-
-/* - API publica - */
-
-void TS_insertar(const char *lexema, TipoComponeneteLexico tipo)
-{
-    unsigned int h = hash(lexema);
-    for (Nodo *n = tabla[h]; n; n = n->sig)
-        if (strcmp(n->lexema, lexema) == 0) return;  /* ya existe */
-
-    Nodo *n = malloc(sizeof *n);
-    strncpy(n->lexema, lexema, TAM_LEXEMA - 1);
-    n->lexema[TAM_LEXEMA - 1] = '\0';
-    n->tipo = tipo;
-    n->sig  = tabla[h];
-    tabla[h] = n;
-}
-
-int TS_buscar(const char *lexema)
-{
-    unsigned int h = hash(lexema);
-    for (Nodo *n = tabla[h]; n; n = n->sig)
-        if (strcmp(n->lexema, lexema) == 0) return n->tipo;
-    return -1;
-}
-
-void TS_init()      //Funcion de precarga de la tabla de simbolos hardcodeando
+void TS_init()
 {
     if (iniciada) return;
-    memset(tabla, 0, sizeof tabla);
+    ABB_init(&tabla);
     iniciada = true;
 
     /* Palabras reservadas precargadas */
@@ -66,25 +42,46 @@ void TS_init()      //Funcion de precarga de la tabla de simbolos hardcodeando
     TS_insertar("enforce", ENFORCE);
 }
 
-void TS_destruir() //Funcion de limpieza
+void TS_insertar(const char *lexema, TipoComponeneteLexico tipo)
 {
-    for (int i = 0; i < NUM_ENTRADAS_HASH; i++) {
-        Nodo *n = tabla[i];
-        while (n) {
-            Nodo *sig = n->sig;
-            free(n);
-            n = sig;
-        }
-        tabla[i] = NULL;
-    }
-    iniciada = false;
+    /* Si ya existe no hace nada (mismo comportamiento que antes) */
+    if (ABB_buscar(&tabla, lexema) != NULL) return;
+
+    TipoComponeneteLexico *dato = malloc(sizeof *dato);
+    *dato = tipo;
+    ABB_insertar(&tabla, lexema, dato);
 }
 
-void TS_imprimir() //funcionnpara imprimr lo que haya en la TS
+int TS_buscar(const char *lexema)
+{
+    TipoComponeneteLexico *dato = ABB_buscar(&tabla, lexema);
+    return dato ? *dato : -1;
+}
+
+
+static void imprimir_nodo(const char *clave, void *dato, void *ctx)
+{
+    (void)ctx;
+    printf("  %-24s -> %d\n", clave, *(TipoComponeneteLexico *)dato);
+}
+
+void TS_imprimir()
 {
     printf("===================================================\n");
-    for (int i = 0; i < NUM_ENTRADAS_HASH; i++)
-        for (Nodo *n = tabla[i]; n; n = n->sig)
-            printf("  %-24s -> %d\n", n->lexema, n->tipo);
+    ABB_inorden(&tabla, imprimir_nodo, NULL);
     printf("===================================================\n");
+}
+
+
+static void liberar_dato(const char *clave, void *dato, void *ctx)
+{
+    (void)clave; (void)ctx;
+    free(dato);
+}
+
+void TS_destruir()
+{
+    ABB_inorden(&tabla, liberar_dato, NULL);
+    ABB_destruir(&tabla);
+    iniciada = false;
 }

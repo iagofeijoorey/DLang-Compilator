@@ -1,40 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "definiciones.h"
 #include "analizadorsintactico.h"
-#include "analizadorlexico.h"
 
 /*
  *
- * En el main la función principal es la de "AS_imprimir_lexemas" que se encuentra aquí
+ * La función principal de esta clase es AS_imprimir_lexemas(), que se invoca desde el main.
  *
- * La función de esta clase es ir pidiendo al analizador léxico el siguiente componente léxico de manera constante
- * mientras no se encuentra el EOF (End of File). Como se puede observar solo tiene una función para inicializar
- * los valores de comp_lex_actual/siguiente (para evitar fallos de memoria) y la función principal cuyo único objetivo
- * es el nombrado anteriormente. Como es de esperar, además de pedir el sigueinte comp. léxico el código también
- * imprime lo que ha leido por pantalla con el formato <tipo, "lexema">.
+ * Esta clase se encarga de solicitar componentes léxicos al analizador léxico generado por Flex
+ * (compilador.l / lex_yy.c) de manera continua hasta encontrar el EOF.
  *
- * Y eso es todo por el analizador sintáctico. Continuación en el analizador léxico.
+ * Cada llamada a yylex() reconoce el siguiente token de la entrada y actualiza la variable global
+ * _ultimo_token, que contiene el tipo y el lexema del componente léxico leído. La función interna
+ * sig_comp_lexico() encapsula este proceso y rellena el estado local comp_lex, colocando un token
+ * de tipo EOF cuando la entrada se agota.
+ *
+ * Por cada componente léxico recibido, AS_imprimir_lexemas() lo imprime por pantalla con el formato
+ * <tipo, "lexema"> y solicita el siguiente. El bucle termina cuando se detecta EOF.
+ *
+ * Y eso es todo por el analizador sintáctico. Continuación en el analizador léxico (compilador.l).
  *
  */
 
-static ComponeneteLexico  comp_lex_actual;
-static ComponeneteLexico  comp_lex_siguiente;
 
+extern int yylex(void);
+extern ComponeneteLexico _ultimo_token;
 
-void AS_inicializar()
+static ComponeneteLexico comp_lex;
+
+static void sig_comp_lexico(void)
 {
-    comp_lex_actual    = AL_sig_comp_lexico();
-    comp_lex_siguiente = AL_sig_comp_lexico();
+    if (yylex() == 0) {
+        ComponeneteLexico eof = { .tipo = EOF, .lexema = "NULL" };
+        comp_lex = eof;
+        return;
+    }
+    comp_lex = _ultimo_token;
 }
 
-void AS_imprimir_lexemas() {
-    //Esta función simplemente mientras no sea el final de fichero imprime el componente lexico que ha leido y luego salta al siguiente
-    while (comp_lex_actual.tipo != EOF) {
-        printf("<%i, \"%s\"> \n", comp_lex_actual.tipo, comp_lex_actual.lexema);
-
-        comp_lex_actual    = comp_lex_siguiente;
-        comp_lex_siguiente = AL_sig_comp_lexico();
+void AS_imprimir_lexemas(void)
+{
+    sig_comp_lexico();
+    while (comp_lex.tipo != EOF) {
+        printf("<%i, \"%s\">\n", comp_lex.tipo, comp_lex.lexema);
+        sig_comp_lexico();
     }
 }
-
-
