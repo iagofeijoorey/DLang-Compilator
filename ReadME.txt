@@ -1,4 +1,4 @@
-//Guía de uso
+//Guía de uso v2
 
 Se puede usar el makefile incluido, usando el comando
 make
