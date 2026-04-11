@@ -1,4 +1,4 @@
-/*
+/* v2
  *
  * compilador.l es el analizador léxico, definido con Flex y compilado a lex_yy.c. Es el núcleo del reconocimiento de tokens: a partir del fichero abierto en yyin,
  * cada llamada a yylex() lee caracteres y aplica las reglas definidas a continuación para identificar el siguiente componente léxico.
