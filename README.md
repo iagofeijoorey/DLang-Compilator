@@ -1,4 +1,4 @@
-# DCompiler: Compilador del lenguaje D en C
+# DCompiler v2: Compilador del lenguaje D en C
 Proyecto desarrollado para la asignatura de Compiladores e intérpretes del grado de Ingeniería Informática en la Universidad de Santiago de Compostela (USC). El proyecto está desarrollado por Iago Feijóo Rey.
 
 ## Descripción del Proyecto
